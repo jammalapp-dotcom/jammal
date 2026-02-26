@@ -19,6 +19,7 @@
     "navigation": {
         "home": "Home",
         "howItWorks": "How It Works",
+        "features": "Features",
         "forCustomers": "For Customers",
         "forDrivers": "For Drivers",
         "vehicles": "Vehicles",
@@ -81,8 +82,6 @@
         "reviewSubtitle": "Almost there! Review your details and accept our terms.",
         "accountType": "Account Type",
         "name": "Name",
-        "phone": "Phone",
-        "email": "Email",
         "vehicle": "Vehicle",
         "crNumber": "CR Number",
         "agreeTerms": "I agree to the",
@@ -121,120 +120,73 @@
         "resendIn": "Resend in {{seconds}}s"
     },
     "landing": {
-        "heroBadge": "🇸🇦 Saudi Arabia's #1 Freight Marketplace",
-        "heroTitle": "Ship Anything,<br />Anywhere in the<br /><span>Kingdom</span>",
-        "heroSubtitle": "Instantly connect with verified truck drivers for same-day pickups. Get competitive quotes, track in real-time, and pay securely — all from one platform.",
-        "shipNow": "Ship Now →",
-        "driveWithUs": "🚛 Drive With Us",
+        "heroBadge": "🇸🇦 Saudi Arabia's #1 Digital Freight Marketplace",
+        "heroTitle": "The Easiest Platform to Connect<br /><span>Shippers, Brokers & Drivers</span>",
+        "heroSubtitle": "Ship your freight fast and securely through Saudi Arabia's largest network of verified drivers. Competitive pricing, real-time tracking, and secure payments — all from one platform.",
+        "ctaShipment": "Request a Shipment",
+        "ctaDriver": "Join as Driver",
         "trustBadges": {
-            "verifiedDrivers": "✅ 100% Verified Drivers",
-            "realTimeTracking": "📍 Real-Time Tracking",
-            "securePayments": "🔒 Secure Payments"
+            "verifiedDrivers": "100% Verified Drivers",
+            "realTimeTracking": "Real-Time Tracking",
+            "securePayments": "Secure Payments"
         },
         "howItWorks": {
-            "title": "How It Works",
-            "subtitle": "Ship your cargo in three easy steps",
+            "title": "How Does Jammal Work?",
+            "subtitle": "Four simple steps from request to delivery",
             "steps": [
                 {
-                    "title": "Post Your Shipment",
-                    "description": "Enter pickup & delivery details, describe your cargo, and choose your vehicle type."
+                    "title": "Create Your Shipment",
+                    "description": "Set your pickup and delivery points, describe your cargo, and select the right vehicle type."
                 },
                 {
-                    "title": "Get Instant Quotes",
-                    "description": "Receive competitive bids from verified drivers or get an instant price from our algorithm."
+                    "title": "Get the Best Price",
+                    "description": "Receive competitive instant quotes from verified drivers or from our smart pricing algorithm."
                 },
                 {
-                    "title": "Track & Receive",
-                    "description": "Follow your shipment live on the map. Get notified at every step until delivery."
+                    "title": "Track Every Moment",
+                    "description": "Monitor your shipment on a real-time map with automatic notifications at every stage."
+                },
+                {
+                    "title": "Receive Your Cargo",
+                    "description": "Delivery confirmed with photos and digital signature. Secure payment is released automatically."
                 }
             ]
         },
-        "forCustomers": {
-            "title": "Everything You Need to Ship",
-            "subtitle": "Powerful tools designed for businesses and individuals",
-            "features": [
+        "features": {
+            "title": "Why Choose Jammal?",
+            "subtitle": "Features designed to accelerate your business and ensure your trust",
+            "items": [
                 {
-                    "title": "Instant Quotes",
-                    "description": "Get a price in seconds. Our dynamic algorithm considers distance, weight, vehicle type, and market demand."
+                    "title": "Fast Delivery",
+                    "description": "Instantly matched with the nearest available driver. Your shipment moves within hours, with 24/7 live GPS tracking."
                 },
                 {
-                    "title": "Live GPS Tracking",
-                    "description": "Watch your cargo move in real-time on an interactive map. ETA updates every 30 seconds."
+                    "title": "Easy Shipment Management",
+                    "description": "Smart dashboard for brokers and businesses. Manage multiple shipments and drivers from one place seamlessly."
                 },
                 {
-                    "title": "Secure Payments",
-                    "description": "Pay via Mada, Apple Pay, STC Pay, or card. Funds held in escrow until delivery confirmed."
-                },
-                {
-                    "title": "Rated & Verified Drivers",
-                    "description": "Every driver is ID-verified and rated by other shippers. Choose based on rating, price, and reviews."
-                },
-                {
-                    "title": "Proof of Delivery",
-                    "description": "Photo evidence + digital signature at pickup and delivery. Full audit trail for every shipment."
-                },
-                {
-                    "title": "Cargo Insurance",
-                    "description": "Optional insurance coverage from 2% of declared value. Peace of mind for high-value shipments."
+                    "title": "Guaranteed Secure Transactions",
+                    "description": "Funds held in escrow until delivery is confirmed. Pay securely via Mada, Apple Pay, or STC Pay."
                 }
             ]
-        },
-        "forDrivers": {
-            "title": "Earn More, Drive Smarter",
-            "subtitle": "Join thousands of drivers growing their business on Jammal",
-            "features": [
-                {
-                    "title": "Flexible Schedule",
-                    "description": "Work when you want. Set your own hours, service areas, and cargo preferences."
-                },
-                {
-                    "title": "Competitive Earnings",
-                    "description": "Set your own prices or bid on shipments. Keep up to 85% of every trip."
-                },
-                {
-                    "title": "Fast Payouts",
-                    "description": "Weekly auto-payouts to your IBAN. Or request instant payout anytime."
-                },
-                {
-                    "title": "Route Optimization",
-                    "description": "Smart navigation with traffic awareness. Multi-stop optimization for maximum efficiency."
-                }
-            ],
-            "cta": "Start Earning Today →"
         },
         "stats": {
             "citiesCovered": "Cities Covered",
             "verifiedDrivers": "Verified Drivers",
             "shipmentsCompleted": "Shipments Completed",
-            "averageRating": "Average Rating"
-        },
-        "vehicles": {
-            "title": "Every Vehicle You Need",
-            "subtitle": "From small pickups to heavy-duty flatbeds — we have the right vehicle for every load",
-            "types": [
-                { "name": "Pickup Truck", "capacity": "Up to 1 ton" },
-                { "name": "Small Lorry", "capacity": "Up to 3 tons" },
-                { "name": "Medium Lorry", "capacity": "Up to 7 tons" },
-                { "name": "Large Truck", "capacity": "Up to 20 tons" },
-                { "name": "Refrigerated", "capacity": "Temperature-controlled" },
-                { "name": "Flatbed", "capacity": "Oversized cargo" },
-                { "name": "Tanker", "capacity": "Liquid transport" },
-                { "name": "Car Carrier", "capacity": "Vehicle transport" },
-                { "name": "Crane Truck", "capacity": "Heavy lift" }
-            ]
+            "averageRating": "User Rating"
         },
         "finalCta": {
-            "title": "Ready to Ship or Drive?",
+            "title": "Ready to Get Started?",
             "subtitle": "Join the Kingdom's fastest-growing freight platform today.",
-            "customerButton": "Create Customer Account",
-            "driverButton": "Register as Driver",
-            "brokerButton": "Register as Broker",
-            "brokerInfo": "Freight brokers can manage multiple shipments and drivers"
+            "customerButton": "Register as Customer",
+            "driverButton": "Join as Driver",
+            "brokerButton": "Register as Broker"
         },
         "shipmentForm": {
             "tag": "Get Instant Quote",
             "title": "Request Your Shipment Quote",
-            "subtitle": "Fill out the form below to get an instant price for your shipment",
+            "subtitle": "Enter your shipment details and get instant pricing",
             "pickupLocation": "Pickup Location",
             "deliveryLocation": "Delivery Location",
             "selectCity": "Select city",
@@ -247,7 +199,7 @@
                 "heavy": "Heavy Machinery",
                 "vehicle": "Vehicle Transport"
             },
-            "vehicleType": "Required Vehicle Type",
+            "vehicleType": "Vehicle Type",
             "selectVehicle": "Select vehicle type",
             "vehicleTypes": {
                 "pickup": "Pickup Truck",
@@ -257,16 +209,103 @@
                 "refrigerated": "Refrigerated Truck",
                 "flatbed": "Flatbed"
             },
-            "estimatedWeight": "Estimated Weight",
+            "estimatedWeight": "Estimated Weight (kg)",
             "weightPlaceholder": "Enter weight in kilograms",
-            "pickupDate": "Pickup Date",
-            "deliveryDate": "Preferred Delivery Date",
-            "specialInstructions": "Special Instructions",
-            "instructionsPlaceholder": "Any special handling requirements, access restrictions, etc.",
-            "getQuote": "Get Instant Quote",
-            "registerNote": "To complete your booking and get matched with drivers,",
-            "registerLink": "create an account"
+            "getQuote": "Get Your Quote",
+            "registerNote": "To complete your order,",
+            "registerLink": "create an account first"
         }
+    },
+    "registerPage": {
+        "chooseType": "Choose Your Account Type",
+        "selectUsage": "Select how you want to use Jammal",
+        "customerTitle": "Customer / Shipper",
+        "customerDesc": "I need to ship freight across Saudi Arabia",
+        "driverTitle": "Driver / Truck Owner",
+        "driverDesc": "I have a vehicle and want to earn by transporting cargo",
+        "brokerTitle": "Freight Broker",
+        "brokerDesc": "I manage shipments and a network of drivers",
+        "yourInfo": "Your Information",
+        "infoSubtitle": "We'll use this to create your account",
+        "fullNameEn": "Full Name (English) *",
+        "fullNameEnPlaceholder": "e.g. Mohammed Al-Salem",
+        "fullNameAr": "Full Name (Arabic)",
+        "fullNameArPlaceholder": "مثال: محمد السالم",
+        "mobile": "Mobile Number *",
+        "email": "Email *",
+        "password": "Password *",
+        "passwordPlaceholder": "Min 8 characters",
+        "confirmPassword": "Confirm Password *",
+        "confirmPasswordPlaceholder": "Re-enter password",
+        "companyDetails": "Company Details (Optional)",
+        "companySubtitle": "For business accounts — skip if personal",
+        "companyName": "Company Name",
+        "companyPlaceholder": "Your company name (optional)",
+        "vehicleDetails": "Vehicle & Driver Details",
+        "vehicleSubtitle": "Tell us about your vehicle and service areas",
+        "serviceAreas": "Service Areas",
+        "ibanLabel": "IBAN (for payouts)",
+        "documents": "Required Documents",
+        "nationalId": "National ID / Iqama",
+        "driversLicense": "Driver's License",
+        "vehicleReg": "Vehicle Registration",
+        "vehicleInsurance": "Vehicle Insurance",
+        "upload": "Upload",
+        "businessInfo": "Business Information",
+        "businessSubtitle": "Required for freight broker verification",
+        "reviewTitle": "Review & Confirm",
+        "reviewSubtitle": "Almost there! Review your details and accept our terms.",
+        "accountType": "Account Type",
+        "name": "Name",
+        "phone": "Phone",
+        "agreeTerms": "I agree to the",
+        "termsOfService": "Terms of Service",
+        "agreePrivacy": "I agree to the",
+        "privacyPolicy": "Privacy Policy",
+        "back": "← Back",
+        "continue": "Continue →",
+        "createAccount": "Create Account ✓",
+        "alreadyHaveAccount": "Already have an account?",
+        "logIn": "Log in",
+        "successTitle": "Registration Successful!",
+        "successCustomer": "Your customer account has been created. You can start shipping right away.",
+        "successDriver": "Your account has been created. Your documents will be reviewed within 24 hours.",
+        "successBroker": "Your account has been created. Business verification is in progress.",
+        "goToLogin": "Go to Login →",
+        "uploaded": "✓ Uploaded",
+        "steps": {
+            "role": "Role",
+            "info": "Info",
+            "company": "Company",
+            "details": "Details",
+            "confirm": "Confirm"
+        },
+        "errors": {
+            "selectRole": "Please select a role",
+            "required": "Required",
+            "invalidPhone": "Enter valid Saudi number (05xxxxxxxx)",
+            "invalidEmail": "Invalid email",
+            "minPassword": "Min 8 characters",
+            "passwordMismatch": "Passwords don't match",
+            "selectVehicle": "Select vehicle type",
+            "acceptTerms": "You must accept Terms of Service",
+            "acceptPrivacy": "You must accept Privacy Policy"
+        }
+    },
+    "footer": {
+        "description": "Saudi Arabia's trusted freight marketplace. Connecting shippers with verified drivers across the Kingdom.",
+        "platform": "Platform",
+        "company": "Company",
+        "legal": "Legal",
+        "aboutUs": "About Us",
+        "careers": "Careers",
+        "contact": "Contact Us",
+        "blog": "Blog",
+        "termsOfService": "Terms of Service",
+        "privacyPolicy": "Privacy Policy",
+        "cookiePolicy": "Cookie Policy",
+        "copyright": "© 2026 Jammal. All rights reserved.",
+        "madeInSaudi": "Made with pride in Saudi Arabia 🇸🇦"
     },
     "admin": {
         "dashboard": "Admin Dashboard",
