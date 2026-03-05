@@ -1,14 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: true,
-    transpilePackages: ['@jammal/shared'],
+    // تمكين transpile للحزم المشتركة
+    transpilePackages: ['@jammal/shared', '@jammal/ui', '@jammal/api'],
+
+    // إعدادت الصور
     images: {
-        remotePatterns: [
-            {
-                protocol: 'https',
-                hostname: 'jammal-uploads.s3.me-south-1.amazonaws.com',
-            },
-        ],
+        domains: ['kfzoouifwtubmsbtktyy.supabase.co'],
     },
 };
 

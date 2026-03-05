@@ -23,7 +23,7 @@ export default function PublicLayout({
             <header className="pub-navbar">
                 <div className="pub-container pub-navbar-inner">
                     <a href="/" className="pub-navbar-brand">
-                        <img src="/logo.png" alt="Jammal | جمّال" className="pub-navbar-logo" />
+                        <img src="/jammal_logo_mini.png" alt="Jammal | جمّال" className="pub-navbar-logo" />
                     </a>
 
                     <nav className={`pub-navbar-links ${mobileMenuOpen ? 'open' : ''}`}>

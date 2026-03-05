@@ -1,0 +1,33 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "strict": true,
+        "jsx": "react-jsx",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "noEmit": true,
+        "paths": {
+            "@/*": [
+                "./*"
+            ],
+            "@jammal/shared": [
+                "../../packages/shared/src"
+            ],
+            "@jammal/ui": [
+                "../../packages/ui/src"
+            ],
+            "@jammal/api": [
+                "../../packages/api/src"
+            ]
+        }
+    },
+    "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        ".expo/types/**/*.ts",
+        "expo-env.d.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

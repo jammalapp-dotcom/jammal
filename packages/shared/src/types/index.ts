@@ -1,372 +1,174 @@
-// ============================================================================
-// JAMMAL — Shared TypeScript Types (Phase 3)
-// Generated from the Prisma schema for frontend consumption
-// ============================================================================
+// جمّال - أنواع TypeScript المشتركة
+// هذا الملف يحتوي على كل الأنواع المستخدمة في الويب والموبايل
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+// ==================== أنواع المستخدمين ====================
 
-export enum UserType {
-    Customer = 'customer',
-    Driver = 'driver',
-    Broker = 'broker',
-    Admin = 'admin',
-    Support = 'support',
-}
+/** أدوار المستخدمين في النظام */
+export type UserRole = 'customer' | 'driver' | 'broker' | 'manager';
 
-export enum Gender {
-    Male = 'male',
-    Female = 'female',
-}
+/** نوع الحساب */
+export type AccountType = 'personal' | 'business';
 
-export enum UserStatus {
-    Active = 'active',
-    Suspended = 'suspended',
-    Banned = 'banned',
-}
-
-export enum VerificationStatus {
-    Pending = 'pending',
-    Approved = 'approved',
-    Rejected = 'rejected',
-}
-
-export enum VehicleType {
-    Pickup = 'pickup',
-    SmallLorry = 'small_lorry',
-    MediumLorry = 'medium_lorry',
-    LargeTruck = 'large_truck',
-    Refrigerated = 'refrigerated',
-    Flatbed = 'flatbed',
-    Tanker = 'tanker',
-    CarCarrier = 'car_carrier',
-    CraneTruck = 'crane_truck',
-}
-
-export enum ShipmentStatus {
-    Draft = 'draft',
-    Searching = 'searching',
-    DriverAssigned = 'driver_assigned',
-    DriverEnRoutePickup = 'driver_en_route_pickup',
-    ArrivedPickup = 'arrived_pickup',
-    CargoLoaded = 'cargo_loaded',
-    InTransit = 'in_transit',
-    ArrivedDelivery = 'arrived_delivery',
-    Delivered = 'delivered',
-    Cancelled = 'cancelled',
-    Disputed = 'disputed',
-}
-
-export enum PricingType {
-    InstantQuote = 'instant_quote',
-    Bidding = 'bidding',
-}
-
-export enum BidStatus {
-    Pending = 'pending',
-    Accepted = 'accepted',
-    Rejected = 'rejected',
-    Withdrawn = 'withdrawn',
-    Expired = 'expired',
-}
-
-export enum PaymentType {
-    Shipment = 'shipment',
-    Refund = 'refund',
-    Payout = 'payout',
-    Commission = 'commission',
-}
-
-export enum PaymentMethod {
-    Card = 'card',
-    Mada = 'mada',
-    ApplePay = 'apple_pay',
-    StcPay = 'stc_pay',
-    BankTransfer = 'bank_transfer',
-    Cash = 'cash',
-    Wallet = 'wallet',
-}
-
-export enum PaymentStatus {
-    Pending = 'pending',
-    Authorized = 'authorized',
-    Captured = 'captured',
-    Failed = 'failed',
-    Refunded = 'refunded',
-}
-
-export enum MessageType {
-    Text = 'text',
-    Image = 'image',
-    Location = 'location',
-    System = 'system',
-}
-
-export enum CargoHandling {
-    Fragile = 'fragile',
-    Refrigerated = 'refrigerated',
-    Hazardous = 'hazardous',
-    HeavyMachinery = 'heavy_machinery',
-    Oversized = 'oversized',
-    Valuable = 'valuable',
-    Perishable = 'perishable',
-    Liquid = 'liquid',
-}
-
-// ============================================================================
-// CORE INTERFACES
-// ============================================================================
-
-export interface IUser {
+/** بيانات المستخدم الكاملة */
+export interface AppUser {
     id: string;
-    userType: UserType;
-    fullNameEn: string;
-    fullNameAr: string;
-    email: string;
-    emailVerified: boolean;
+    name: string;
+    nameEn: string;
     phone: string;
-    phoneVerified: boolean;
-    profilePhotoUrl?: string;
-    nationalId?: string;
-    dateOfBirth?: string; // ISO date
-    gender?: Gender;
-    status: UserStatus;
-    locale: 'ar' | 'en';
-    lastLoginAt?: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface ICustomerProfile {
-    userId: string;
-    companyName?: string;
-    companyCr?: string;
-    isBusiness: boolean;
-    preferredPaymentMethod?: string;
+    email: string;
+    role: UserRole;
+    type: AccountType;
+    company: string;
+    companyEn: string;
+    rating: number;
     totalShipments: number;
-    totalSpent: number;
-    averageRating?: number;
+    walletBalance: number;
+    verified: boolean;
+    avatar?: string;
+    isOnline?: boolean;
+    vehicleType?: string;
+    vehiclePlate?: string;
+    completedTrips?: number;
+    fleetSize?: number;
 }
 
-export interface IDriverProfile {
-    userId: string;
-    verificationStatus: VerificationStatus;
-    driverLicenseNumber?: string;
-    driverLicenseExpiry?: string;
-    driverLicensePhotoUrl?: string;
-    nationalIdPhotoFront?: string;
-    nationalIdPhotoBack?: string;
-    isOnline: boolean;
-    currentLatitude?: number;
-    currentLongitude?: number;
-    lastLocationUpdate?: string;
-    totalTrips: number;
-    totalEarnings: number;
-    availableBalance: number;
-    averageRating?: number;
-    acceptanceRate?: number;
-    cancellationRate?: number;
-    onTimeRate?: number;
-    iban?: string;
-    serviceAreas?: string[];
-    maxDistance?: number;
-}
+// ==================== أنواع الشحنات ====================
 
-export interface IBrokerProfile {
-    userId: string;
-    companyNameEn?: string;
-    companyNameAr?: string;
-    commercialRegistration?: string;
-    crPhotoUrl?: string;
-    taxNumber?: string;
-    licenseNumber?: string;
-    verificationStatus: VerificationStatus;
-    totalShipments: number;
-    totalRevenue: number;
-    commissionRate: number;
-    iban?: string;
-}
+/** حالات الشحنة */
+export type ShipmentStatus = 'draft' | 'searching' | 'assigned' | 'pickup' | 'en_route' | 'delivered' | 'disputed' | 'cancelled';
 
-export interface IVehicle {
-    id: string;
-    driverId: string;
-    vehicleType: VehicleType;
-    make?: string;
-    model?: string;
-    year?: number;
-    licensePlate: string;
-    color?: string;
-    capacityKg: number;
-    lengthMeters?: number;
-    registrationNumber?: string;
-    registrationExpiry?: string;
-    registrationPhotoUrl?: string;
-    insuranceNumber?: string;
-    insuranceExpiry?: string;
-    insurancePhotoUrl?: string;
-    vehiclePhotos?: string[];
-    isActive: boolean;
-}
+/** طريقة التسعير */
+export type PricingMode = 'bidding' | 'instant';
 
-export interface IShipment {
+/** حالة الدفع */
+export type PaymentStatus = 'pending' | 'authorized' | 'released' | 'refunded';
+
+/** بيانات الشحنة */
+export interface Shipment {
     id: string;
     customerId: string;
-    brokerId?: string;
-    driverId?: string;
-
-    // Pickup
+    pickupCity: string;
     pickupAddress: string;
-    pickupLatitude: number;
-    pickupLongitude: number;
-    pickupContactName?: string;
-    pickupContactPhone?: string;
-    pickupDate?: string;
-    pickupTime?: string;
-    pickupInstructions?: string;
-
-    // Delivery
+    deliveryCity: string;
     deliveryAddress: string;
-    deliveryLatitude: number;
-    deliveryLongitude: number;
-    deliveryContactName?: string;
-    deliveryContactPhone?: string;
-    deliveryDate?: string;
-    deliveryTime?: string;
-    deliveryInstructions?: string;
-
-    // Cargo
-    cargoType?: string;
-    cargoDescription?: string;
-    cargoWeightKg?: number;
-    cargoLengthCm?: number;
-    cargoWidthCm?: number;
-    cargoHeightCm?: number;
-    cargoQuantity?: number;
-    cargoPhotos?: string[];
-    specialHandling?: CargoHandling[];
-
-    // Vehicle
-    requiredVehicleType?: string;
-    minimumCapacityKg?: number;
-
-    // Pricing
-    pricingType: PricingType;
-    estimatedPrice?: number;
-    finalPrice?: number;
-    platformCommission?: number;
-    insuranceFee?: number;
-    insuranceValue?: number;
-    maxAcceptablePrice?: number;
-
-    // Status
+    cargoCategory: string;
+    cargoCategoryAr: string;
+    weight: number;
+    description: string;
+    descriptionAr: string;
+    specialHandling: string[];
+    vehicleType: string;
     status: ShipmentStatus;
-    assignedAt?: string;
-    pickupCompletedAt?: string;
-    deliveryCompletedAt?: string;
-    cancelledAt?: string;
-    biddingExpiresAt?: string;
-
-    // Proof
-    pickupProofPhotoUrl?: string;
-    deliveryProofPhotoUrl?: string;
-    customerSignature?: string;
-
-    distanceKm?: number;
-    durationMinutes?: number;
-
+    pricingMode: PricingMode;
+    estimatedPrice: number;
+    finalPrice?: number;
     createdAt: string;
-    updatedAt: string;
-
-    // Populated relations (optional — present when included)
-    customer?: Pick<IUser, 'id' | 'fullNameEn' | 'fullNameAr' | 'phone' | 'profilePhotoUrl'>;
-    driver?: Pick<IUser, 'id' | 'fullNameEn' | 'fullNameAr' | 'phone' | 'profilePhotoUrl'>;
-    bids?: IBid[];
-    ratings?: IRating[];
+    pickupDate: string;
+    driverName?: string;
+    driverNameAr?: string;
+    driverRating?: number;
+    driverPhone?: string;
+    driverId?: string;
+    vehiclePlate?: string;
+    bidsCount: number;
+    distance: number;
+    estimatedDuration: string;
+    trackingProgress?: number;
+    paymentStatus?: PaymentStatus;
+    paymentMethod?: string;
+    brokerId?: string;
 }
 
-export interface IBid {
+// ==================== أنواع السائقين ====================
+
+/** بيانات السائق */
+export interface Driver {
+    id: string;
+    name: string;
+    nameAr: string;
+    phone: string;
+    rating: number;
+    completedTrips: number;
+    vehicleType: string;
+    vehiclePlate: string;
+    avatar?: string;
+    isOnline: boolean;
+    bidAmount?: number;
+    estimatedArrival?: string;
+    responseTime?: string;
+}
+
+// ==================== أنواع المزايدات ====================
+
+/** حالة المزايدة */
+export type BidStatus = 'pending' | 'accepted' | 'rejected';
+
+/** بيانات المزايدة */
+export interface Bid {
     id: string;
     shipmentId: string;
-    driverId: string;
-    bidAmount: number;
-    message?: string;
-    status: BidStatus;
-    createdAt: string;
-    expiresAt?: string;
-
-    // Populated
-    driver?: Pick<IUser, 'fullNameEn' | 'fullNameAr' | 'profilePhotoUrl'> & {
-        driverProfile?: Pick<IDriverProfile, 'averageRating' | 'totalTrips'>;
-        vehicles?: Pick<IVehicle, 'vehicleType' | 'licensePlate' | 'vehiclePhotos'>[];
-    };
-}
-
-export interface IPayment {
-    id: string;
-    shipmentId?: string;
-    userId: string;
-    paymentType: PaymentType;
+    driver: Driver;
     amount: number;
-    currency: string;
-    paymentMethod: PaymentMethod;
-    paymentGateway?: string;
-    transactionId?: string;
-    status: PaymentStatus;
-    createdAt: string;
-    completedAt?: string;
-}
-
-export interface IRating {
-    id: string;
-    shipmentId: string;
-    ratedBy: string;
-    ratedUser: string;
-    overallRating: number;
-    punctualityRating?: number;
-    professionalismRating?: number;
-    vehicleCleanlinessRating?: number;
-    cargoHandlingRating?: number;
-    reviewText?: string;
-    reviewPhotos?: string[];
-    tags?: string[];
-    isPublished: boolean;
-    createdAt: string;
-}
-
-export interface IMessage {
-    id: string;
-    conversationId: string;
-    senderId: string;
-    receiverId: string;
-    shipmentId?: string;
-    messageType: MessageType;
-    messageText?: string;
-    mediaUrl?: string;
-    latitude?: number;
-    longitude?: number;
-    isRead: boolean;
-    createdAt: string;
-}
-
-export interface INotification {
-    id: string;
-    userId: string;
-    notificationType: string;
-    title: string;
-    titleAr?: string;
+    estimatedArrival: string;
     message: string;
-    messageAr?: string;
-    data?: Record<string, any>;
-    isRead: boolean;
-    sentPush: boolean;
-    sentSms: boolean;
-    sentEmail: boolean;
+    messageAr: string;
     createdAt: string;
+    status?: BidStatus;
 }
 
-export interface ILocationUpdate {
+// ==================== أنواع المحفظة ====================
+
+/** نوع المعاملة المالية */
+export type TransactionType = 'payment' | 'refund' | 'withdrawal' | 'earning' | 'commission';
+
+/** حالة المعاملة */
+export type TransactionStatus = 'completed' | 'pending' | 'failed';
+
+/** معاملة مالية */
+export interface WalletTransaction {
+    id: string;
+    type: TransactionType;
+    amount: number;
+    description: string;
+    descriptionAr: string;
+    date: string;
+    status: TransactionStatus;
+    shipmentId?: string;
+}
+
+// ==================== أنواع الدردشة ====================
+
+/** رسالة دردشة */
+export interface ChatMessage {
+    id: string;
     shipmentId: string;
+    senderId: string;
+    senderName: string;
+    text: string;
+    timestamp: string;
+    isMe: boolean;
+}
+
+// ==================== أنواع الإشعارات ====================
+
+/** نوع الإشعار */
+export type NotificationType = 'shipment' | 'payment' | 'system' | 'bid';
+
+/** إشعار */
+export interface Notification {
+    id: string;
+    title: string;
+    body: string;
+    type: NotificationType;
+    read: boolean;
+    timestamp: string;
+    shipmentId?: string;
+}
+
+// ==================== أنواع التتبع الحي ====================
+
+/** بيانات موقع السائق (للتتبع الحي) */
+export interface DriverLocation {
     driverId: string;
     latitude: number;
     longitude: number;
@@ -375,96 +177,74 @@ export interface ILocationUpdate {
     timestamp: string;
 }
 
-export interface ISavedAddress {
+// ==================== أنواع قاعدة البيانات (Supabase) ====================
+
+/** صف المستخدم في قاعدة البيانات */
+export interface DbUser {
     id: string;
-    userId: string;
-    label: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    contactName?: string;
-    contactPhone?: string;
-    isDefault: boolean;
+    role: UserRole;
+    name: string;
+    name_ar: string | null;
+    phone: string;
+    email: string | null;
+    company: string | null;
+    company_ar: string | null;
+    wallet_balance: number;
+    rating: number;
+    verified: boolean;
+    vehicle_type: string | null;
+    vehicle_plate: string | null;
+    is_online: boolean;
+    current_location: unknown | null; // PostGIS geography
+    completed_trips: number;
+    fleet_size: number;
+    created_at: string;
 }
 
-// ============================================================================
-// API RESPONSE TYPES
-// ============================================================================
-
-export interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    message: string;
-    timestamp: string;
+/** صف الشحنة في قاعدة البيانات */
+export interface DbShipment {
+    id: string;
+    short_id: string;
+    customer_id: string;
+    driver_id: string | null;
+    pickup_city: string;
+    pickup_address: string;
+    delivery_city: string;
+    delivery_address: string;
+    cargo_category: string;
+    cargo_category_ar: string;
+    weight: number;
+    description: string | null;
+    description_ar: string | null;
+    vehicle_type: string;
+    status: ShipmentStatus;
+    pricing_mode: PricingMode;
+    estimated_price: number;
+    final_price: number | null;
+    distance: number;
+    estimated_duration: string | null;
+    payment_status: string;
+    tracking_progress: number;
+    pickup_date: string | null;
+    created_at: string;
 }
 
-export interface ApiError {
-    success: false;
-    error: {
-        code: string;
-        message: string;
-        details?: { field: string; message: string }[];
-    };
-    timestamp: string;
+/** صف المزايدة في قاعدة البيانات */
+export interface DbBid {
+    id: string;
+    shipment_id: string;
+    driver_id: string;
+    amount: number;
+    message: string | null;
+    status: BidStatus;
+    created_at: string;
 }
 
-export interface PaginatedResponse<T> {
-    success: true;
-    data: T[];
-    pagination: {
-        current_page: number;
-        per_page: number;
-        total_items: number;
-        total_pages: number;
-        has_next: boolean;
-        has_prev: boolean;
-    };
-    timestamp: string;
-}
-
-export interface AuthResponse {
-    accessToken: string;
-    refreshToken: string;
-    user: IUser;
-}
-
-export interface PricingBreakdown {
-    baseFare: number;
-    distanceCharge: number;
-    weightSurcharge: number;
-    vehicleMultiplier: number;
-    vehicleSurcharge: number;
-    cargoSurcharge: number;
-    peakSurcharge: number;
-    seasonalSurcharge: number;
-    surgePricing: number;
-    insuranceFee: number;
-    subtotal: number;
-    platformCommission: number;
-    vat: number;
-    totalPrice: number;
-    driverPayout: number;
-    currency: 'SAR';
-}
-
-// ============================================================================
-// SOCKET EVENT TYPES
-// ============================================================================
-
-export interface SocketEvents {
-    // Client → Server
-    'location:update': (data: { shipmentId: string; latitude: number; longitude: number; heading?: number; speed?: number }) => void;
-    'tracking:subscribe': (data: { shipmentId: string }) => void;
-    'tracking:unsubscribe': (data: { shipmentId: string }) => void;
-    'chat:send': (data: { conversationId: string; receiverId: string; message: string; type: MessageType }) => void;
-    'chat:read': (data: { conversationId: string }) => void;
-    'chat:typing': (data: { conversationId: string; receiverId: string }) => void;
-
-    // Server → Client
-    'location:updated': (data: ILocationUpdate) => void;
-    'shipment:status_changed': (data: { shipmentId: string; oldStatus: string; newStatus: string; timestamp: string }) => void;
-    'chat:message': (data: IMessage) => void;
-    'chat:sent': (data: { id: string; conversationId: string; status: string }) => void;
-    'chat:read_receipt': (data: { conversationId: string; readBy: string; readAt: string }) => void;
-    'bid:new': (data: { shipmentId: string; bid: IBid }) => void;
+/** صف الرسالة في قاعدة البيانات */
+export interface DbMessage {
+    id: string;
+    shipment_id: string;
+    sender_id: string;
+    text: string;
+    created_at: string;
 }

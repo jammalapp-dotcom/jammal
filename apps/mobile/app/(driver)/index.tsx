@@ -1,237 +1,182 @@
-// ============================================================================
-// JAMMAL — Driver Home Screen (Map with online/offline toggle)
-// Shows map with nearby requests, online status, and active trip
-// ============================================================================
-
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-    View, Text, StyleSheet, Pressable, Switch, Dimensions, Alert,
-} from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import * as Location from 'expo-location';
+import React from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, Switch } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
-import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from '../../src/stores/auth.store';
-import { api } from '../../src/config/api';
-import { useLocationTracking } from '../../src/hooks/useLocationTracking';
-import { colors, spacing, typography, borderRadius } from '../../src/theme';
-
-const { width } = Dimensions.get('window');
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { theme } from '../../constants/theme';
+import { SHIPMENT_STATUSES } from '../../constants/config';
+import { useAuth } from '../../hooks/useAuth';
+import { useApp } from '../../contexts/AppContext';
 
 export default function DriverHomeScreen() {
-    const router = useRouter();
-    const { t, i18n } = useTranslation();
-    const { user, accessToken } = useAuthStore();
-    const isAr = i18n.language === 'ar';
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { shipments, driverOnline, setDriverOnline, driverWalletBalance, getUnreadNotifCount } = useApp();
+  const myTrips = shipments.filter((s) => s.driverId === user?.id || s.driverName === user?.nameEn || s.driverNameAr === user?.name);
+  const activeTrip = myTrips.find((s) => ['assigned', 'pickup', 'en_route'].includes(s.status));
+  const completedToday = myTrips.filter((s) => s.status === 'delivered').length;
+  const todayEarnings = myTrips.filter((s) => s.status === 'delivered' && s.finalPrice).reduce((sum, s) => sum + (s.finalPrice || 0) * 0.85, 0);
 
-    const [isOnline, setIsOnline] = useState(false);
-    const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-    const [availableRequests, setAvailableRequests] = useState<any[]>([]);
-    const [activeTrip, setActiveTrip] = useState<any>(null);
-    const mapRef = useRef<MapView>(null);
-    const socketRef = useRef<Socket | null>(null);
+  return (
+    <SafeAreaView edges={['top']} style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>أهلاً يا سائق</Text>
+            <Text style={styles.name}>{user?.name || 'سائق'}</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <Pressable style={styles.notifBtn} onPress={() => router.push('/notifications')}>
+              <MaterialIcons name="notifications-none" size={24} color={theme.primary} />
+              {getUnreadNotifCount() > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{getUnreadNotifCount()}</Text></View>}
+            </Pressable>
+            <Image source={require('../../assets/images/jammal-logo.png')} style={styles.logo} contentFit="contain" />
+          </View>
+        </Animated.View>
 
-    // Get current location on mount
-    useEffect(() => {
-        (async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') return;
-            const loc = await Location.getCurrentPositionAsync({});
-            setCurrentLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-        })();
-    }, []);
-
-    // Location tracking for active trip
-    const { currentLocation: trackingLoc, isTracking } = useLocationTracking({
-        shipmentId: activeTrip?.id || '',
-        enabled: !!activeTrip && isOnline,
-    });
-
-    // Socket.IO — listen for new shipment requests
-    useEffect(() => {
-        if (!accessToken || !isOnline) return;
-
-        const socket = io(API_URL, {
-            auth: { token: accessToken },
-            transports: ['websocket'],
-        });
-
-        socket.on('shipment:new', (data) => {
-            setAvailableRequests((prev) => [data, ...prev]);
-        });
-
-        socket.on('shipment:status_changed', (data) => {
-            if (data.newStatus === 'cancelled') {
-                setAvailableRequests((prev) => prev.filter((r) => r.shipmentId !== data.shipmentId));
-            }
-        });
-
-        socketRef.current = socket;
-        return () => { socket.disconnect(); };
-    }, [accessToken, isOnline]);
-
-    const toggleOnline = useCallback(async () => {
-        const newState = !isOnline;
-        setIsOnline(newState);
-        if (!accessToken || !currentLocation) return;
-        try {
-            await api.toggleDriverOnline(newState, currentLocation.latitude, currentLocation.longitude, accessToken);
-        } catch (err) {
-            console.error('Toggle online failed:', err);
-            setIsOnline(!newState); // revert
-        }
-    }, [isOnline, accessToken, currentLocation]);
-
-    const initialRegion = {
-        latitude: currentLocation?.latitude || 24.7136,
-        longitude: currentLocation?.longitude || 46.6753,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-    };
-
-    return (
-        <View style={styles.container}>
-            {/* Map */}
-            <MapView
-                ref={mapRef}
-                style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={initialRegion}
-                showsUserLocation
-                showsMyLocationButton
-                showsCompass
-            >
-                {/* Available shipment request markers */}
-                {availableRequests.map((req, i) => (
-                    <Marker
-                        key={i}
-                        coordinate={{
-                            latitude: req.pickupLatitude || 24.7,
-                            longitude: req.pickupLongitude || 46.7,
-                        }}
-                        pinColor={colors.accent}
-                        title={isAr ? 'طلب شحنة' : 'Shipment Request'}
-                    />
-                ))}
-            </MapView>
-
-            {/* Online/Offline Toggle */}
-            <View style={styles.statusBar}>
-                <View style={styles.statusLeft}>
-                    <View style={[styles.statusDot, { backgroundColor: isOnline ? colors.success : colors.textMuted }]} />
-                    <Text style={styles.statusText}>
-                        {isOnline ? t('driver.goOnline') : t('driver.goOffline')}
-                    </Text>
-                </View>
-                <Switch
-                    value={isOnline}
-                    onValueChange={toggleOnline}
-                    trackColor={{ false: colors.border, true: colors.success + '60' }}
-                    thumbColor={isOnline ? colors.success : '#f4f3f4'}
-                />
+        {/* Online Toggle */}
+        <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+          <View style={[styles.onlineCard, driverOnline && styles.onlineCardActive]}>
+            <View style={styles.onlineLeft}>
+              <View style={[styles.onlineDot, driverOnline && styles.onlineDotActive]} />
+              <View>
+                <Text style={[styles.onlineLabel, driverOnline && { color: '#FFF' }]}>{driverOnline ? 'متصل - جاهز للاستلام' : 'غير متصل'}</Text>
+                <Text style={[styles.onlineSub, driverOnline && { color: 'rgba(255,255,255,0.7)' }]}>
+                  {user?.vehiclePlate || 'ب ع ن ٢٣٤٥'}
+                </Text>
+              </View>
             </View>
+            <Switch value={driverOnline} onValueChange={setDriverOnline} trackColor={{ false: theme.border, true: theme.accent }} thumbColor="#FFF" />
+          </View>
+        </Animated.View>
 
-            {/* Bottom Panel */}
-            <View style={styles.bottomPanel}>
-                {isOnline ? (
-                    <>
-                        <Text style={styles.panelTitle}>
-                            {isAr ? 'الطلبات المتاحة' : 'Available Requests'}
-                        </Text>
-                        {availableRequests.length === 0 ? (
-                            <View style={styles.waitingState}>
-                                <Ionicons name="radio-outline" size={32} color={colors.primary} />
-                                <Text style={styles.waitingText}>
-                                    {isAr ? 'في انتظار طلبات الشحن...' : 'Waiting for shipment requests...'}
-                                </Text>
-                            </View>
-                        ) : (
-                            availableRequests.slice(0, 3).map((req, i) => (
-                                <Pressable key={i} style={styles.requestCard}>
-                                    <View style={styles.reqInfo}>
-                                        <Text style={styles.reqRoute}>{req.pickupAddress} → {req.deliveryAddress}</Text>
-                                        <Text style={styles.reqPrice}>{req.estimatedPrice || '—'} {t('common.sar')}</Text>
-                                    </View>
-                                    <Pressable style={styles.acceptBtn}>
-                                        <Text style={styles.acceptBtnText}>{t('driver.acceptShipment')}</Text>
-                                    </Pressable>
-                                </Pressable>
-                            ))
-                        )}
-                    </>
-                ) : (
-                    <View style={styles.offlineState}>
-                        <Ionicons name="moon-outline" size={40} color={colors.textMuted} />
-                        <Text style={styles.offlineText}>
-                            {isAr ? 'أنت غير متصل\nقم بالتفعيل لاستقبال الطلبات' : "You're offline\nGo online to receive requests"}
-                        </Text>
-                    </View>
+        {/* Stats */}
+        <Animated.View entering={FadeInDown.delay(300).duration(500)}>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <MaterialIcons name="account-balance-wallet" size={24} color={theme.accent} />
+              <Text style={styles.statVal}>{driverWalletBalance.toLocaleString()}</Text>
+              <Text style={styles.statLbl}>ر.س الرصيد</Text>
+            </View>
+            <View style={styles.statCard}>
+              <MaterialIcons name="check-circle" size={24} color={theme.success} />
+              <Text style={styles.statVal}>{completedToday}</Text>
+              <Text style={styles.statLbl}>رحلات مكتملة</Text>
+            </View>
+            <View style={styles.statCard}>
+              <MaterialIcons name="star" size={24} color={theme.accent} />
+              <Text style={styles.statVal}>{user?.rating || 4.9}</Text>
+              <Text style={styles.statLbl}>التقييم</Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Active Trip */}
+        {activeTrip ? (
+          <Animated.View entering={FadeInDown.delay(400).duration(500)}>
+            <View style={styles.sectionH}><Text style={styles.sectionTitle}>الرحلة النشطة</Text></View>
+            <Pressable style={styles.activeTripCard} onPress={() => router.push(`/shipment/${activeTrip.id}`)}>
+              <LinearGradient colors={[theme.primary, theme.primaryLight]} style={styles.activeTripGrad}>
+                <View style={styles.atTop}>
+                  <Text style={styles.atId}>{activeTrip.id}</Text>
+                  <View style={styles.atBadge}><Text style={styles.atBadgeText}>{SHIPMENT_STATUSES[activeTrip.status].labelAr}</Text></View>
+                </View>
+                <View style={styles.atRoute}>
+                  <View style={styles.atRouteRow}><View style={[styles.atDot, { backgroundColor: theme.accent }]} /><Text style={styles.atCity}>{activeTrip.pickupCity}</Text></View>
+                  <MaterialIcons name="arrow-downward" size={16} color="rgba(255,255,255,0.4)" />
+                  <View style={styles.atRouteRow}><MaterialIcons name="location-on" size={14} color={theme.error} /><Text style={styles.atCity}>{activeTrip.deliveryCity}</Text></View>
+                </View>
+                <View style={styles.atFooter}>
+                  <Text style={styles.atPrice}>{(activeTrip.finalPrice || activeTrip.estimatedPrice).toLocaleString()} ر.س</Text>
+                  <Text style={styles.atDist}>{activeTrip.distance} كم</Text>
+                </View>
+                {activeTrip.trackingProgress !== undefined && (
+                  <View style={styles.atProgress}><View style={styles.atProgressBg}><View style={[styles.atProgressFill, { width: `${activeTrip.trackingProgress * 100}%` }]} /></View><Text style={styles.atProgressText}>{Math.round(activeTrip.trackingProgress * 100)}٪</Text></View>
                 )}
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        ) : (
+          <Animated.View entering={FadeInDown.delay(400).duration(500)}>
+            <View style={styles.noTrip}><MaterialIcons name="local-shipping" size={48} color={theme.textTertiary} /><Text style={styles.noTripText}>لا توجد رحلة نشطة</Text><Text style={styles.noTripSub}>تصفح الشحنات المتاحة للبدء</Text></View>
+          </Animated.View>
+        )}
 
-                {/* Quick Stats */}
-                <View style={styles.quickStats}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>0</Text>
-                        <Text style={styles.statLabel}>{t('driver.totalTrips')}</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>0.00</Text>
-                        <Text style={styles.statLabel}>{t('driver.todayEarnings')}</Text>
-                    </View>
-                </View>
-            </View>
-        </View>
-    );
+        {/* Recent Trips */}
+        <Animated.View entering={FadeInDown.delay(500).duration(500)}>
+          <View style={styles.sectionH}><Text style={styles.sectionTitle}>رحلاتي الأخيرة</Text></View>
+          {myTrips.length === 0 ? (
+            <Text style={styles.noData}>لا توجد رحلات سابقة</Text>
+          ) : (
+            myTrips.slice(0, 5).map((s) => {
+              const st = SHIPMENT_STATUSES[s.status];
+              return (
+                <Pressable key={s.id} style={styles.tripRow} onPress={() => router.push(`/shipment/${s.id}`)}>
+                  <View style={[styles.tripIcon, { backgroundColor: st.color + '15' }]}><MaterialIcons name={s.status === 'delivered' ? 'check-circle' : 'local-shipping'} size={22} color={st.color} /></View>
+                  <View style={{ flex: 1 }}><Text style={styles.tripRoute}>{s.pickupCity} → {s.deliveryCity}</Text><Text style={styles.tripMeta}>{s.createdAt} • {s.distance} كم</Text></View>
+                  <Text style={styles.tripPrice}>{(s.finalPrice || s.estimatedPrice).toLocaleString()} ر.س</Text>
+                </Pressable>
+              );
+            })
+          )}
+        </Animated.View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    map: { flex: 1 },
-    statusBar: {
-        position: 'absolute', top: 60, left: spacing.xl, right: spacing.xl,
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: colors.surface, borderRadius: borderRadius.lg,
-        paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-        shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5,
-    },
-    statusLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    statusDot: { width: 12, height: 12, borderRadius: 6 },
-    statusText: { ...typography.body, fontWeight: '600', color: colors.text },
-    bottomPanel: {
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: colors.surface,
-        borderTopLeftRadius: 24, borderTopRightRadius: 24,
-        paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: 40,
-        shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, elevation: 8,
-        maxHeight: '45%',
-    },
-    panelTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.md },
-    waitingState: { alignItems: 'center', paddingVertical: spacing.lg },
-    waitingText: { ...typography.body, color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center' },
-    requestCard: {
-        backgroundColor: colors.background, borderRadius: borderRadius.md,
-        padding: spacing.md, marginBottom: spacing.sm,
-    },
-    reqInfo: { marginBottom: spacing.sm },
-    reqRoute: { ...typography.bodySmall, color: colors.text },
-    reqPrice: { ...typography.body, color: colors.primary, fontWeight: '700', marginTop: 4 },
-    acceptBtn: {
-        backgroundColor: colors.success, paddingVertical: 10,
-        borderRadius: borderRadius.sm, alignItems: 'center',
-    },
-    acceptBtnText: { ...typography.button, color: colors.textInverse, fontSize: 14 },
-    offlineState: { alignItems: 'center', paddingVertical: spacing.xl },
-    offlineText: { ...typography.body, color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
-    quickStats: {
-        flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.borderLight,
-        marginTop: spacing.lg, paddingTop: spacing.md,
-    },
-    statItem: { flex: 1, alignItems: 'center' },
-    statValue: { ...typography.h2, color: colors.primary },
-    statLabel: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
-    statDivider: { width: 1, backgroundColor: colors.border },
+  container: { flex: 1, backgroundColor: theme.background },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
+  greeting: { fontSize: 14, color: theme.textSecondary },
+  name: { fontSize: 24, fontWeight: '700', color: theme.textPrimary, marginTop: 2 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  notifBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center', ...theme.shadows.card },
+  badge: { position: 'absolute', top: 6, right: 8, width: 16, height: 16, borderRadius: 8, backgroundColor: theme.error, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: 10, color: '#FFF', fontWeight: '700' },
+  logo: { width: 40, height: 40 },
+  onlineCard: { marginHorizontal: 16, borderRadius: 16, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.surface, borderWidth: 2, borderColor: theme.border, ...theme.shadows.card },
+  onlineCardActive: { backgroundColor: theme.success, borderColor: theme.success },
+  onlineLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  onlineDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: theme.textTertiary },
+  onlineDotActive: { backgroundColor: '#FFF' },
+  onlineLabel: { fontSize: 16, fontWeight: '700', color: theme.textPrimary },
+  onlineSub: { fontSize: 13, color: theme.textSecondary, marginTop: 2 },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, gap: 10 },
+  statCard: { flex: 1, backgroundColor: theme.surface, borderRadius: 16, padding: 14, alignItems: 'center', gap: 6, ...theme.shadows.card },
+  statVal: { fontSize: 20, fontWeight: '700', color: theme.textPrimary },
+  statLbl: { fontSize: 11, color: theme.textSecondary },
+  sectionH: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: theme.textPrimary },
+  activeTripCard: { marginHorizontal: 16, borderRadius: 16, overflow: 'hidden', ...theme.shadows.cardElevated },
+  activeTripGrad: { padding: 20 },
+  atTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  atId: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
+  atBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  atBadgeText: { fontSize: 12, fontWeight: '600', color: '#FFF' },
+  atRoute: { gap: 4, marginBottom: 16 },
+  atRouteRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  atDot: { width: 10, height: 10, borderRadius: 5 },
+  atCity: { fontSize: 18, fontWeight: '700', color: '#FFF' },
+  atFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  atPrice: { fontSize: 22, fontWeight: '700', color: theme.accent },
+  atDist: { fontSize: 14, color: 'rgba(255,255,255,0.6)' },
+  atProgress: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  atProgressBg: { flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3, overflow: 'hidden' },
+  atProgressFill: { height: 6, backgroundColor: theme.accent, borderRadius: 3 },
+  atProgressText: { fontSize: 12, fontWeight: '600', color: theme.accent },
+  noTrip: { alignItems: 'center', padding: 32, gap: 8, marginHorizontal: 16, backgroundColor: theme.surface, borderRadius: 16, ...theme.shadows.card },
+  noTripText: { fontSize: 16, fontWeight: '600', color: theme.textPrimary },
+  noTripSub: { fontSize: 13, color: theme.textSecondary },
+  noData: { fontSize: 14, color: theme.textSecondary, textAlign: 'center', padding: 20 },
+  tripRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
+  tripIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  tripRoute: { fontSize: 15, fontWeight: '600', color: theme.textPrimary },
+  tripMeta: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
+  tripPrice: { fontSize: 15, fontWeight: '700', color: theme.accent },
 });

@@ -1,15 +1,17 @@
 /* ============================================================================
- * JAMMAL — Root Layout (minimal shell)
- * Fonts + global CSS only; page-specific chrome lives in route group layouts
+ * جمّال — التخطيط الجذري للويب
+ * يوفر Supabase Provider + i18n + Theme CSS Variables
  * ========================================================================== */
 
 import type { Metadata } from 'next';
-import './globals.css';
 import { LanguageProvider } from '../src/context/LanguageContext';
+import { SupabaseProvider } from '../src/context/SupabaseContext';
+import './globals.css';
 
 export const metadata: Metadata = {
-    title: 'Jammal — Saudi Arabia\'s Freight Marketplace | جمّال',
-    description: 'Connect with trusted drivers and ship freight across Saudi Arabia. Instant quotes, live tracking, secure payments.',
+    title: 'جمّال | Jammal - سوق الشحن السعودي',
+    description: 'منصة جمّال للشحن - Saudi Freight Marketplace. اطلب شحنتك، قارن العروض، وتابع شحنتك لحظة بلحظة.',
+    keywords: ['شحن', 'نقل', 'سعودية', 'freight', 'shipping', 'jammal', 'جمال'],
 };
 
 export default function RootLayout({
@@ -18,17 +20,20 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" dir="ltr">
+        <html lang="ar" dir="rtl">
             <head>
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
                 <link
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;500;600;700;800&display=swap"
+                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap"
                     rel="stylesheet"
                 />
             </head>
             <body>
                 <LanguageProvider>
-                    {children}
+                    <SupabaseProvider>
+                        {children}
+                    </SupabaseProvider>
                 </LanguageProvider>
             </body>
         </html>

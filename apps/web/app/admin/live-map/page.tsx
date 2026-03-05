@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import { io, Socket } from 'socket.io-client';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -35,7 +35,7 @@ interface ShipmentInfo {
 }
 
 export default function LiveMapPage() {
-    const [drivers, setDrivers] = useState<Map<string, DriverMarker>>(new Map());
+    const [drivers, setDrivers] = useState<globalThis.Map<string, DriverMarker>>(new globalThis.Map());
     const [selectedDriver, setSelectedDriver] = useState<DriverMarker | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [stats, setStats] = useState({
@@ -48,8 +48,9 @@ export default function LiveMapPage() {
 
     useEffect(() => {
         // Connect to the tracking WebSocket as admin
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
         const socket = io(API_URL, {
-            auth: { token: 'admin-token' }, // TODO: use actual admin JWT
+            auth: { token: token || '' },
             transports: ['websocket'],
         });
 
@@ -64,7 +65,7 @@ export default function LiveMapPage() {
         // Receive live location updates from all drivers
         socket.on('location:updated', (data: any) => {
             setDrivers(prev => {
-                const updated = new Map(prev);
+                const updated = new globalThis.Map(prev);
                 updated.set(data.driverId, {
                     driverId: data.driverId,
                     driverName: data.driverName,
@@ -83,7 +84,7 @@ export default function LiveMapPage() {
         socket.on('shipment:status_changed', (data: any) => {
             if (data.newStatus === 'delivered' || data.newStatus === 'cancelled') {
                 setDrivers(prev => {
-                    const updated = new Map(prev);
+                    const updated = new globalThis.Map(prev);
                     // Find and remove driver for this shipment
                     for (const [id, driver] of updated) {
                         if (driver.shipmentId === data.shipmentId) {
@@ -165,7 +166,7 @@ export default function LiveMapPage() {
             <div className="content-card wide" style={{ height: '600px', overflow: 'hidden', padding: 0 }}>
                 {GOOGLE_MAPS_KEY ? (
                     <APIProvider apiKey={GOOGLE_MAPS_KEY}>
-                        <Map
+                        <GoogleMap
                             style={{ width: '100%', height: '100%' }}
                             defaultCenter={{ lat: 24.7136, lng: 46.6753 }}
                             defaultZoom={6}
@@ -210,7 +211,7 @@ export default function LiveMapPage() {
                                     </div>
                                 </InfoWindow>
                             )}
-                        </Map>
+                        </GoogleMap>
                     </APIProvider>
                 ) : (
                     <div style={{

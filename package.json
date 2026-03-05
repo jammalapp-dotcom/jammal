@@ -1,28 +1,21 @@
 {
-  "name": "jammal",
+  "name": "jammal-monorepo",
+  "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev:api": "npm run dev --workspace=packages/api",
-    "dev:web": "npm run dev --workspace=apps/web",
-    "dev:mobile": "npm run start --workspace=apps/mobile",
-    "build:api": "npm run build --workspace=packages/api",
-    "build:web": "npm run build --workspace=apps/web",
-    "db:generate": "npm run generate --workspace=packages/db",
-    "db:migrate": "npm run migrate --workspace=packages/db",
-    "db:push": "npm run push --workspace=packages/db",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@jammal/web",
+    "dev:mobile": "turbo run dev --filter=@jammal/mobile",
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=@jammal/web",
+    "type-check": "turbo run type-check",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "db:migrate": "cd packages/db && pnpm run migrate",
+    "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
-    "typescript": "^5.7.0"
-  },
-  "engines": {
-    "node": ">=20.0.0"
-  },
-  "packageManager": "npm@10.0.0"
+    "turbo": "^2.3.0",
+    "typescript": "~5.8.3"
+  }
 }

@@ -1,57 +1,54 @@
 {
     "expo": {
-        "name": "Jammal",
+        "name": "جمّال - Jammal",
         "slug": "jammal",
         "version": "1.0.0",
-        "scheme": "jammal",
-        "platforms": [
-            "ios",
-            "android"
-        ],
         "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#1B365D"
-        },
+        "icon": "./assets/images/jammal_logo_mini.png",
+        "scheme": "jammal",
+        "userInterfaceStyle": "automatic",
+        "newArchEnabled": true,
         "ios": {
-            "supportsTablet": false,
-            "bundleIdentifier": "sa.jammal.app",
+            "supportsTablet": true,
+            "bundleIdentifier": "com.jammal.app",
             "infoPlist": {
-                "NSLocationAlwaysAndWhenInUseUsageDescription": "Jammal needs access to your location for real-time shipment tracking.",
-                "NSLocationWhenInUseUsageDescription": "Jammal needs access to your location to show nearby shipments.",
-                "NSCameraUsageDescription": "Jammal needs camera access to take photos of cargo and documents."
+                "ITSAppUsesNonExemptEncryption": false
             }
         },
         "android": {
-            "package": "sa.jammal.app",
             "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#1B365D"
+                "foregroundImage": "./assets/images/jammal_logo_mini.png",
+                "backgroundColor": "#1B2A4A"
             },
-            "permissions": [
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_COARSE_LOCATION",
-                "ACCESS_BACKGROUND_LOCATION",
-                "CAMERA"
-            ]
+            "edgeToEdgeEnabled": true,
+            "package": "com.jammal.app"
+        },
+        "web": {
+            "bundler": "metro",
+            "output": "static",
+            "favicon": "./assets/images/jammal_logo_mini.png"
         },
         "plugins": [
             "expo-router",
-            "expo-location",
-            "expo-secure-store",
-            "expo-image-picker",
-            "expo-notifications"
+            [
+                "expo-splash-screen",
+                {
+                    "image": "./assets/images/jammal-logo.png",
+                    "imageWidth": 200,
+                    "resizeMode": "contain",
+                    "backgroundColor": "#1B2A4A"
+                }
+            ],
+            "expo-web-browser"
         ],
-        "extra": {
-            "eas": {
-                "projectId": "your-eas-project-id"
-            }
+        "experiments": {
+            "typedRoutes": true
         },
-        "locales": {
-            "ar": "./locales/ar.json",
-            "en": "./locales/en.json"
+        "extra": {
+            "router": {},
+            "eas": {
+                "projectId": "1083dc1c-c366-440c-82a4-b20d1c39b0dd"
+            }
         }
     }
 }

@@ -2,13 +2,15 @@
  * JAMMAL — Registration Page
  * Multi-step form: Role → Basic Info → Role-Specific → Confirm
  * Fully translated via i18next
+ * Integrated with Supabase OTP
  * ========================================================================== */
 
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useSupabase } from '../../../src/context/SupabaseContext';
 
 type Role = 'customer' | 'driver' | 'broker';
 
@@ -29,10 +31,15 @@ const VEHICLE_TYPES = [
 
 function RegisterForm() {
     const { t } = useTranslation();
+    const router = useRouter();
     const searchParams = useSearchParams();
+    const { sendOtp } = useSupabase();
+
     const [step, setStep] = useState(1);
     const [role, setRole] = useState<Role | ''>('');
     const [submitted, setSubmitted] = useState(false);
+    const [apiLoading, setApiLoading] = useState(false);
+    const [apiError, setApiError] = useState('');
 
     // Basic info
     const [fullNameEn, setFullNameEn] = useState('');
@@ -67,7 +74,7 @@ function RegisterForm() {
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        const r = searchParams.get('role');
+        const r = searchParams?.get('role');
         if (r === 'customer' || r === 'driver' || r === 'broker') {
             setRole(r);
             setStep(2);
@@ -119,9 +126,38 @@ function RegisterForm() {
         if (step > 1) setStep(step - 1);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validate()) return;
-        setSubmitted(true);
+        setApiLoading(true);
+        setApiError('');
+        try {
+            const success = await sendOtp(phone);
+
+            if (!success) {
+                setApiError(t('auth.networkError'));
+                setApiLoading(false);
+                return;
+            }
+
+            // Store metadata to be saved in profile after verification
+            const profileData = {
+                userType: role,
+                fullNameEn,
+                fullNameAr: fullNameAr || fullNameEn,
+                email,
+                phone: phone.startsWith('0') ? phone : `0${phone}`,
+                details: role === 'driver' ? { vehicleType, licensePlate, idNumber, serviceAreas, iban } :
+                    role === 'broker' ? { companyNameEn, companyNameAr, crNumber, taxNumber, freelanceDocument, iban } :
+                        { companyName }
+            };
+            localStorage.setItem('jammal_pending_profile', JSON.stringify(profileData));
+
+            router.push(`/login?phone=${encodeURIComponent(phone)}&verify=true`);
+        } catch (err) {
+            setApiError('Network error. Please try again.');
+        } finally {
+            setApiLoading(false);
+        }
     };
 
     const getStepLabel = (s: number) => {
@@ -135,18 +171,12 @@ function RegisterForm() {
     };
 
     if (submitted) {
-        const successMsg = role === 'driver'
-            ? t('registerPage.successDriver')
-            : role === 'broker'
-                ? t('registerPage.successBroker')
-                : t('registerPage.successCustomer');
-
         return (
             <div className="pub-auth-page">
                 <div className="pub-auth-card pub-success-card">
                     <div className="pub-success-icon">✅</div>
                     <h2>{t('registerPage.successTitle')}</h2>
-                    <p>{successMsg}</p>
+                    <p>{t('registerPage.successMsg')}</p>
                     <a href="/login" className="pub-btn pub-btn-primary pub-btn-lg" style={{ marginTop: 24 }}>
                         {t('registerPage.goToLogin')}
                     </a>
@@ -159,7 +189,7 @@ function RegisterForm() {
         <div className="pub-auth-page">
             <div className="pub-auth-card pub-auth-wide">
                 <div className="pub-auth-logo">
-                    <img src="/logo.png" alt="Jammal | جمّال" style={{ height: '80px' }} />
+                    <img src="/jammal-logo.png" alt="Jammal | جمّال" style={{ height: '80px' }} />
                 </div>
                 {/* Progress */}
                 <div className="pub-reg-progress">
@@ -311,31 +341,6 @@ function RegisterForm() {
                                 <label>{t('registerPage.ibanLabel')}</label>
                                 <input type="text" placeholder={t('auth.ibanPlaceholder')} value={iban} onChange={(e) => setIban(e.target.value)} />
                             </div>
-                            <div className="pub-form-group full">
-                                <label>{t('registerPage.documents')}</label>
-                                <div className="pub-doc-uploads">
-                                    <div className="pub-doc-slot">
-                                        <span>📄</span>
-                                        <span>{t('registerPage.nationalId')}</span>
-                                        <button type="button" className="pub-btn pub-btn-sm">{t('registerPage.upload')}</button>
-                                    </div>
-                                    <div className="pub-doc-slot">
-                                        <span>🪪</span>
-                                        <span>{t('registerPage.driversLicense')}</span>
-                                        <button type="button" className="pub-btn pub-btn-sm">{t('registerPage.upload')}</button>
-                                    </div>
-                                    <div className="pub-doc-slot">
-                                        <span>📋</span>
-                                        <span>{t('registerPage.vehicleReg')}</span>
-                                        <button type="button" className="pub-btn pub-btn-sm">{t('registerPage.upload')}</button>
-                                    </div>
-                                    <div className="pub-doc-slot">
-                                        <span>🛡️</span>
-                                        <span>{t('registerPage.vehicleInsurance')}</span>
-                                        <button type="button" className="pub-btn pub-btn-sm">{t('registerPage.upload')}</button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 )}
@@ -396,38 +401,6 @@ function RegisterForm() {
                                 <span>{t('registerPage.email')}</span>
                                 <strong>{email || '—'}</strong>
                             </div>
-                            {role === 'driver' && (
-                                <>
-                                    <div className="pub-review-row">
-                                        <span>{t('auth.vehicle')}</span>
-                                        <strong>{vehicleType ? t(`landing.shipmentForm.vehicleTypes.${vehicleType}`) : '—'}</strong>
-                                    </div>
-                                    <div className="pub-review-row">
-                                        <span>{t('auth.idNumber')}</span>
-                                        <strong>{idNumber || '—'}</strong>
-                                    </div>
-                                    <div className="pub-review-row">
-                                        <span>{t('auth.licensePlate')}</span>
-                                        <strong>{licensePlate || '—'}</strong>
-                                    </div>
-                                </>
-                            )}
-                            {role === 'broker' && (
-                                <>
-                                    <div className="pub-review-row">
-                                        <span>{t('auth.companyName')}</span>
-                                        <strong>{companyNameEn || '—'}</strong>
-                                    </div>
-                                    <div className="pub-review-row">
-                                        <span>{t('auth.crNumber')}</span>
-                                        <strong>{crNumber || '—'}</strong>
-                                    </div>
-                                    <div className="pub-review-row">
-                                        <span>{t('auth.freelanceDocument')}</span>
-                                        <strong>{freelanceDocument ? t('registerPage.uploaded') : '—'}</strong>
-                                    </div>
-                                </>
-                            )}
                         </div>
 
                         <div className="pub-form-checks">
@@ -442,6 +415,8 @@ function RegisterForm() {
                             </label>
                             {errors.privacy && <p className="pub-form-error">{errors.privacy}</p>}
                         </div>
+
+                        {apiError && <p className="pub-form-error" style={{ textAlign: 'center', marginTop: 12 }}>{apiError}</p>}
                     </div>
                 )}
 
@@ -458,8 +433,8 @@ function RegisterForm() {
                             {t('registerPage.continue')}
                         </button>
                     ) : (
-                        <button className="pub-btn pub-btn-accent pub-btn-lg" onClick={handleSubmit}>
-                            {t('registerPage.createAccount')}
+                        <button className="pub-btn pub-btn-accent pub-btn-lg" onClick={handleSubmit} disabled={apiLoading}>
+                            {apiLoading ? '...' : t('registerPage.createAccount')}
                         </button>
                     )}
                 </div>

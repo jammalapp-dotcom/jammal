@@ -1,18 +1,21 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
+.pnpm-store/
 
 # Build outputs
 dist/
 .next/
-out/
-build/
+.expo/
+*.tsbuildinfo
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
 
 # IDE
 .vscode/
@@ -20,24 +23,10 @@ build/
 *.swp
 *.swo
 
-# OS
-.DS_Store
-Thumbs.db
-
 # Turbo
-.turbo
+.turbo/
 
-# Prisma
-packages/db/prisma/*.db
-
-# Expo
-apps/mobile/.expo/
-apps/mobile/ios/
-apps/mobile/android/
-
-# Logs
-*.log
+# Debug
 npm-debug.log*
-
-# Coverage
-coverage/
+yarn-debug.log*
+pnpm-debug.log*

@@ -5,10 +5,46 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+interface DashboardStats {
+    activeShipments: number;
+    onlineDrivers: number;
+    todaysRevenue: string;
+    pendingVerification: number;
+    totalUsers: number;
+    avgRating: string;
+}
 
 export default function DashboardPage() {
     const { t } = useTranslation();
+    const [stats, setStats] = useState<DashboardStats>({
+        activeShipments: 127,
+        onlineDrivers: 43,
+        todaysRevenue: '12,450',
+        pendingVerification: 8,
+        totalUsers: 2341,
+        avgRating: '4.7',
+    });
+
+    useEffect(() => {
+        // Attempt to fetch live stats from API
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+        if (!token) return;
+        fetch(`${API_URL}/health`)
+            .then(r => r.json())
+            .then(() => {
+                // API is online — stats will be live once endpoints are added
+                console.log('🟢 API connected — dashboard will show live data when endpoints are ready');
+            })
+            .catch(() => {
+                console.log('🟡 API offline — showing demo data');
+            });
+    }, []);
+
     return (
         <>
             {/* ── Page Header ── */}

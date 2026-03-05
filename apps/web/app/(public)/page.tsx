@@ -5,8 +5,10 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useSupabase } from '../../src/context/SupabaseContext';
 
 /* ── Animated counter hook ── */
 function useCounter(end: number, suffix = '', duration = 2000) {
@@ -122,6 +124,20 @@ const IconLock = () => (
 
 export default function LandingPage() {
     const { t } = useTranslation();
+    const router = useRouter();
+    const { supabase, user } = useSupabase();
+
+    // Form state
+    const [formData, setFormData] = useState({
+        pickup: '',
+        delivery: '',
+        cargoType: '',
+        vehicleType: '',
+        weight: '',
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+
     const statCities = useCounter(14, '+');
     const statDrivers = useCounter(2500, '+');
     const statShipments = useCounter(12000, '+');
@@ -130,46 +146,116 @@ export default function LandingPage() {
     const stepIcons = [<IconPackage key="p" />, <IconQuote key="q" />, <IconMap key="m" />, <IconCheck key="c" />];
     const featureIcons = [<IconSpeed key="s" />, <IconDashboard key="d" />, <IconLock key="l" />];
 
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) {
+            // Store form data to resume after registration
+            localStorage.setItem('jammal_pending_shipment', JSON.stringify(formData));
+            router.push('/register?role=customer&return_to=shipment');
+            return;
+        }
+
+        if (!formData.pickup || !formData.delivery || !formData.cargoType) {
+            alert(t('landing.shipmentForm.errorFillRequired'));
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            // Generate a random Short ID (SH-YYYY-XXXX)
+            const shortId = `SH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+            const { error } = await supabase.from('shipments').insert({
+                short_id: shortId,
+                customer_id: user?.id || '00000000-0000-0000-0000-000000000000', // Need actual ID from context
+                pickup_city: formData.pickup,
+                pickup_address: formData.pickup, // Default to city name for now
+                delivery_city: formData.delivery,
+                delivery_address: formData.delivery, // Default to city name for now
+                cargo_category: formData.cargoType,
+                cargo_category_ar: t(`landing.shipmentForm.cargoTypes.${formData.cargoType}`),
+                weight: parseInt(formData.weight) || 0,
+                vehicle_type: formData.vehicleType,
+                status: 'searching', // Must be 'searching' to be visible to others
+                pricing_mode: 'bidding', // Default pricing mode
+                estimated_price: 0, // Placeholder
+                distance: 0, // Placeholder
+                created_at: new Date().toISOString(),
+            });
+
+            if (error) throw error;
+            setSuccess(true);
+            setFormData({ pickup: '', delivery: '', cargoType: '', vehicleType: '', weight: '' });
+        } catch (err: any) {
+            console.error('Submission error:', err.message);
+            alert(t('landing.shipmentForm.errorGeneric') + ': ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <>
             {/* ═══════════════════════════════════════════
                  HERO
             ═══════════════════════════════════════════ */}
-            <section className="pub-hero" id="hero">
-                <div className="pub-hero-bg" aria-hidden="true" />
-                <div className="pub-hero-pattern" aria-hidden="true" />
-                <div className="pub-container pub-hero-content">
-                    <div className="pub-hero-badge">
+            <section className="pub-hero" id="hero" style={{
+                backgroundImage: 'url(/jammal_hero_main.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div className="pub-hero-overlay" style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to bottom, rgba(15, 26, 46, 0.5) 0%, rgba(15, 26, 46, 0.8) 100%)',
+                    zIndex: 1
+                }} />
+
+                <div className="pub-container pub-hero-content" style={{ position: 'relative', zIndex: 2 }}>
+                    {/* Sky Logo Overlay */}
+                    <div className="pub-hero-sky-logo" style={{
+                        textAlign: 'center',
+                        marginBottom: '40px',
+                        animation: 'float 8s ease-in-out infinite'
+                    }}>
+                        <img src="/jammal-logo.png" alt="Jammal" style={{
+                            height: '120px',
+                            filter: 'drop-shadow(0 0 30px rgba(255, 215, 0, 0.4)) brightness(1.1)'
+                        }} />
+                    </div>
+
+                    <div className="pub-hero-badge" style={{ animation: 'fadeInUp 1s ease-out' }}>
                         {t('landing.heroBadge')}
                     </div>
                     <h1
                         className="pub-hero-title"
+                        style={{
+                            color: '#fff',
+                            textShadow: '0 4px 20px rgba(0,0,0,0.6)',
+                            fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                            lineHeight: 1.1,
+                            fontWeight: 900
+                        }}
                         dangerouslySetInnerHTML={{ __html: t('landing.heroTitle') }}
                     />
-                    <p className="pub-hero-sub">
+                    <p className="pub-hero-sub" style={{
+                        color: 'rgba(255,255,255,0.95)',
+                        fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+                        textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                        maxWidth: '800px',
+                        margin: '24px auto'
+                    }}>
                         {t('landing.heroSubtitle')}
                     </p>
-                    <div className="pub-hero-ctas">
-                        <a href="#shipment-request" className="pub-btn pub-btn-accent pub-btn-lg">
+                    <div className="pub-hero-ctas" style={{ marginTop: '40px' }}>
+                        <a href="#shipment-request" className="pub-btn pub-btn-accent pub-btn-lg" style={{ minWidth: '200px', boxShadow: '0 10px 20px rgba(200, 151, 62, 0.3)' }}>
                             {t('landing.ctaShipment')}
                         </a>
-                        <a href="/register?role=driver" className="pub-btn pub-btn-outline pub-btn-lg">
+                        <a href="/register?role=driver" className="pub-btn pub-btn-outline-white pub-btn-lg" style={{ minWidth: '200px' }}>
                             {t('landing.ctaDriver')}
                         </a>
-                    </div>
-                    <div className="pub-hero-trust">
-                        <span>
-                            <IconShield />
-                            {t('landing.trustBadges.verifiedDrivers')}
-                        </span>
-                        <span>
-                            <IconTracking />
-                            {t('landing.trustBadges.realTimeTracking')}
-                        </span>
-                        <span>
-                            <IconPayment />
-                            {t('landing.trustBadges.securePayments')}
-                        </span>
                     </div>
                 </div>
             </section>
@@ -238,64 +324,117 @@ export default function LandingPage() {
                     </div>
 
                     <div className="pub-shipment-form-card">
-                        <form className="pub-form-grid" onSubmit={(e) => e.preventDefault()}>
-                            <div className="pub-form-group">
-                                <label>{t('landing.shipmentForm.pickupLocation')} *</label>
-                                <select>
-                                    <option value="">{t('landing.shipmentForm.selectCity')}</option>
-                                    {['Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar', 'Tabuk', 'Abha', 'Taif'].map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="pub-form-group">
-                                <label>{t('landing.shipmentForm.deliveryLocation')} *</label>
-                                <select>
-                                    <option value="">{t('landing.shipmentForm.selectCity')}</option>
-                                    {['Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar', 'Tabuk', 'Abha', 'Taif'].map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="pub-form-group">
-                                <label>{t('landing.shipmentForm.cargoType')} *</label>
-                                <select>
-                                    <option value="">{t('landing.shipmentForm.selectCargoType')}</option>
-                                    <option value="general">{t('landing.shipmentForm.cargoTypes.general')}</option>
-                                    <option value="fragile">{t('landing.shipmentForm.cargoTypes.fragile')}</option>
-                                    <option value="refrigerated">{t('landing.shipmentForm.cargoTypes.refrigerated')}</option>
-                                    <option value="heavy">{t('landing.shipmentForm.cargoTypes.heavy')}</option>
-                                    <option value="vehicle">{t('landing.shipmentForm.cargoTypes.vehicle')}</option>
-                                </select>
-                            </div>
-                            <div className="pub-form-group">
-                                <label>{t('landing.shipmentForm.vehicleType')}</label>
-                                <select>
-                                    <option value="">{t('landing.shipmentForm.selectVehicle')}</option>
-                                    <option value="pickup">{t('landing.shipmentForm.vehicleTypes.pickup')}</option>
-                                    <option value="small_lorry">{t('landing.shipmentForm.vehicleTypes.small_lorry')}</option>
-                                    <option value="medium_lorry">{t('landing.shipmentForm.vehicleTypes.medium_lorry')}</option>
-                                    <option value="large_truck">{t('landing.shipmentForm.vehicleTypes.large_truck')}</option>
-                                    <option value="refrigerated">{t('landing.shipmentForm.vehicleTypes.refrigerated')}</option>
-                                    <option value="flatbed">{t('landing.shipmentForm.vehicleTypes.flatbed')}</option>
-                                </select>
-                            </div>
-                            <div className="pub-form-group full">
-                                <label>{t('landing.shipmentForm.estimatedWeight')}</label>
-                                <input type="number" placeholder={t('landing.shipmentForm.weightPlaceholder')} />
-                            </div>
-                            <div className="pub-form-group full" style={{ textAlign: 'center', marginTop: '16px' }}>
-                                <button type="button" className="pub-btn pub-btn-primary pub-btn-lg">
-                                    {t('landing.shipmentForm.getQuote')} →
+                        {success ? (
+                            <div style={{ textAlign: 'center', padding: '40px' }}>
+                                <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+                                <h3 style={{ marginBottom: '8px' }}>{t('landing.shipmentForm.successTitle')}</h3>
+                                <p style={{ color: 'var(--text-secondary)' }}>{t('landing.shipmentForm.successMessage')}</p>
+                                <button
+                                    className="pub-btn pub-btn-outline"
+                                    style={{ marginTop: '24px', color: 'var(--primary)', borderColor: 'var(--primary)' }}
+                                    onClick={() => setSuccess(false)}
+                                >
+                                    {t('landing.shipmentForm.newRequest')}
                                 </button>
-                                <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                                    {t('landing.shipmentForm.registerNote')}{' '}
-                                    <a href="/register" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-                                        {t('landing.shipmentForm.registerLink')}
-                                    </a>
-                                </p>
                             </div>
-                        </form>
+                        ) : (
+                            <form className="pub-form-premium" onSubmit={handleFormSubmit}>
+                                <div className="pub-form-section">
+                                    <h4 style={{ color: 'var(--primary)', marginBottom: '16px', fontSize: '1.1rem' }}>📍 {t('landing.shipmentForm.routeInfo') || 'معلومات المسار'}</h4>
+                                    <div className="pub-form-row">
+                                        <div className="pub-form-group">
+                                            <label>{t('landing.shipmentForm.pickupLocation')} *</label>
+                                            <select
+                                                value={formData.pickup}
+                                                onChange={e => setFormData({ ...formData, pickup: e.target.value })}
+                                                required
+                                            >
+                                                <option value="">{t('landing.shipmentForm.selectCity')}</option>
+                                                {Object.entries(t('landing.shipmentForm.cities', { returnObjects: true })).map(([key, label]) => (
+                                                    <option key={key} value={key}>{label as string}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="pub-form-group">
+                                            <label>{t('landing.shipmentForm.deliveryLocation')} *</label>
+                                            <select
+                                                value={formData.delivery}
+                                                onChange={e => setFormData({ ...formData, delivery: e.target.value })}
+                                                required
+                                            >
+                                                <option value="">{t('landing.shipmentForm.selectCity')}</option>
+                                                {Object.entries(t('landing.shipmentForm.cities', { returnObjects: true })).map(([key, label]) => (
+                                                    <option key={key} value={key}>{label as string}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pub-form-section" style={{ marginTop: '24px' }}>
+                                    <h4 style={{ color: 'var(--primary)', marginBottom: '16px', fontSize: '1.1rem' }}>📦 {t('landing.shipmentForm.cargoDetails') || 'تفاصيل الشحنة'}</h4>
+                                    <div className="pub-form-row">
+                                        <div className="pub-form-group">
+                                            <label>{t('landing.shipmentForm.cargoType')} *</label>
+                                            <select
+                                                value={formData.cargoType}
+                                                onChange={e => setFormData({ ...formData, cargoType: e.target.value })}
+                                                required
+                                            >
+                                                <option value="">{t('landing.shipmentForm.selectCargoType')}</option>
+                                                <option value="general">{t('landing.shipmentForm.cargoTypes.general')}</option>
+                                                <option value="fragile">{t('landing.shipmentForm.cargoTypes.fragile')}</option>
+                                                <option value="refrigerated">{t('landing.shipmentForm.cargoTypes.refrigerated')}</option>
+                                                <option value="heavy">{t('landing.shipmentForm.cargoTypes.heavy')}</option>
+                                                <option value="vehicle">{t('landing.shipmentForm.cargoTypes.vehicle')}</option>
+                                            </select>
+                                        </div>
+                                        <div className="pub-form-group">
+                                            <label>{t('landing.shipmentForm.vehicleType')}</label>
+                                            <select
+                                                value={formData.vehicleType}
+                                                onChange={e => setFormData({ ...formData, vehicleType: e.target.value })}
+                                            >
+                                                <option value="">{t('landing.shipmentForm.selectVehicle')}</option>
+                                                <option value="pickup">{t('landing.shipmentForm.vehicleTypes.pickup')}</option>
+                                                <option value="small_lorry">{t('landing.shipmentForm.vehicleTypes.small_lorry')}</option>
+                                                <option value="medium_lorry">{t('landing.shipmentForm.vehicleTypes.medium_lorry')}</option>
+                                                <option value="large_truck">{t('landing.shipmentForm.vehicleTypes.large_truck')}</option>
+                                                <option value="refrigerated">{t('landing.shipmentForm.vehicleTypes.refrigerated')}</option>
+                                                <option value="flatbed">{t('landing.shipmentForm.vehicleTypes.flatbed')}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="pub-form-group full" style={{ marginTop: '16px' }}>
+                                        <label>{t('landing.shipmentForm.estimatedWeight')}</label>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            value={formData.weight}
+                                            onChange={e => {
+                                                const val = e.target.value.replace(/\D/g, '');
+                                                setFormData({ ...formData, weight: val });
+                                            }}
+                                            placeholder={t('landing.shipmentForm.weightPlaceholder')}
+                                            style={{ color: '#1B2A4A', background: '#FFFFFF', opacity: 1, cursor: 'text' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pub-form-submit-area" style={{ textAlign: 'center', marginTop: '32px' }}>
+                                    <button type="submit" className="pub-btn pub-btn-primary pub-btn-lg pub-btn-block" disabled={isSubmitting}>
+                                        {isSubmitting ? t('common.loading') : (t('landing.shipmentForm.getQuote') + ' →')}
+                                    </button>
+                                    <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                        {t('landing.shipmentForm.registerNote')}{' '}
+                                        <a href="/register" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'underline' }}>
+                                            {t('landing.shipmentForm.registerLink')}
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 </div>
             </section>
@@ -306,20 +445,20 @@ export default function LandingPage() {
             <section className="pub-stats-bar">
                 <div className="pub-container pub-stats-inner">
                     <div className="pub-stat-item">
-                        <span className="pub-stat-value" ref={statCities}>0</span>
-                        <span className="pub-stat-label">{t('landing.stats.citiesCovered')}</span>
+                        <span className="pub-stat-value" ref={statCities} style={{ color: '#FFFFFF' }}>0</span>
+                        <span className="pub-stat-label" style={{ color: 'rgba(255,255,255,0.95)' }}>{t('landing.stats.citiesCovered')}</span>
                     </div>
                     <div className="pub-stat-item">
-                        <span className="pub-stat-value" ref={statDrivers}>0</span>
-                        <span className="pub-stat-label">{t('landing.stats.verifiedDrivers')}</span>
+                        <span className="pub-stat-value" ref={statDrivers} style={{ color: '#FFFFFF' }}>0</span>
+                        <span className="pub-stat-label" style={{ color: 'rgba(255,255,255,0.95)' }}>{t('landing.stats.verifiedDrivers')}</span>
                     </div>
                     <div className="pub-stat-item">
-                        <span className="pub-stat-value" ref={statShipments}>0</span>
-                        <span className="pub-stat-label">{t('landing.stats.shipmentsCompleted')}</span>
+                        <span className="pub-stat-value" ref={statShipments} style={{ color: '#FFFFFF' }}>0</span>
+                        <span className="pub-stat-label" style={{ color: 'rgba(255,255,255,0.95)' }}>{t('landing.stats.shipmentsCompleted')}</span>
                     </div>
                     <div className="pub-stat-item">
-                        <span className="pub-stat-value" ref={statRating}>0</span>
-                        <span className="pub-stat-label">{t('landing.stats.averageRating')}</span>
+                        <span className="pub-stat-value" ref={statRating} style={{ color: '#FFFFFF' }}>0</span>
+                        <span className="pub-stat-label" style={{ color: 'rgba(255,255,255,0.95)' }}>{t('landing.stats.averageRating')}</span>
                     </div>
                 </div>
             </section>
@@ -327,18 +466,38 @@ export default function LandingPage() {
             {/* ═══════════════════════════════════════════
                  FINAL CTA
             ═══════════════════════════════════════════ */}
-            <section className="pub-cta-section">
-                <div className="pub-container pub-cta-inner">
-                    <h2>{t('landing.finalCta.title')}</h2>
-                    <p>{t('landing.finalCta.subtitle')}</p>
-                    <div className="pub-hero-ctas">
-                        <a href="/register?role=customer" className="pub-btn pub-btn-accent pub-btn-lg">
+            <section className="pub-cta-section" style={{
+                background: 'linear-gradient(135deg, #0F1A2E 0%, #1B2A4A 100%)',
+                padding: '100px 0',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div className="pub-container pub-cta-inner" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+                    <img src="/jammal-logo.png" alt="Jammal" style={{
+                        height: '80px',
+                        marginBottom: '32px',
+                        filter: 'drop-shadow(0 0 15px rgba(255,215,0,0.3))'
+                    }} />
+                    <h2 style={{
+                        color: '#fff',
+                        fontSize: 'clamp(2rem, 4vw, 3rem)',
+                        fontWeight: 800,
+                        marginBottom: '16px'
+                    }}>{t('landing.finalCta.title')}</h2>
+                    <p style={{
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        fontSize: '1.2rem',
+                        maxWidth: '600px',
+                        margin: '0 auto 48px'
+                    }}>{t('landing.finalCta.subtitle')}</p>
+                    <div className="pub-hero-ctas" style={{ gap: '20px' }}>
+                        <a href="/register?role=customer" className="pub-btn pub-btn-accent pub-btn-lg" style={{ minWidth: '180px' }}>
                             {t('landing.finalCta.customerButton')}
                         </a>
-                        <a href="/register?role=driver" className="pub-btn pub-btn-outline-white pub-btn-lg">
+                        <a href="/register?role=driver" className="pub-btn pub-btn-outline-white pub-btn-lg" style={{ minWidth: '180px' }}>
                             {t('landing.finalCta.driverButton')}
                         </a>
-                        <a href="/register?role=broker" className="pub-btn pub-btn-outline-white pub-btn-lg">
+                        <a href="/register?role=broker" className="pub-btn pub-btn-outline-white pub-btn-lg" style={{ minWidth: '180px' }}>
                             {t('landing.finalCta.brokerButton')}
                         </a>
                     </div>
