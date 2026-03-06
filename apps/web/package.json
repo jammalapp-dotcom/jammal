@@ -10,9 +10,9 @@
         "type-check": "tsc --noEmit"
     },
     "dependencies": {
+        "@jammal/api": "workspace:*",
         "@jammal/shared": "workspace:*",
         "@jammal/ui": "workspace:*",
-        "@jammal/api": "workspace:*",
         "@supabase/supabase-js": "^2.50.0",
         "@vis.gl/react-google-maps": "^1.5.0",
         "i18next": "^25.8.10",
@@ -20,7 +20,8 @@
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-i18next": "^16.5.4",
-        "recharts": "^2.14.0"
+        "recharts": "^2.14.0",
+        "socket.io-client": "^4.8.3"
     },
     "devDependencies": {
         "@types/node": "^22.0.0",
