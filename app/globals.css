@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Jammal Brand Colors */
+    --primary: #1B2A4A;
+    --primary-light: #2D4A7A;
+    --primary-dark: #0F1A2E;
+    --accent: #C8973E;
+    --accent-light: #D4AD5E;
+    --accent-dark: #A67B2E;
+    
+    /* Semantic tokens */
+    --background: 0 0% 98%;
+    --foreground: 222 47% 20%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 20%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 20%;
+    
+    --primary-hsl: 222 47% 20%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 20%;
+    
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    
+    --accent-hsl: 38 56% 51%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 222 47% 20%;
+    
+    /* Status colors */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    
+    --radius: 0.75rem;
+    
+    /* Chart colors */
+    --chart-1: 222 47% 20%;
+    --chart-2: 38 56% 51%;
+    --chart-3: 160 84% 39%;
+    --chart-4: 217 91% 60%;
+    --chart-5: 0 84% 60%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 0 0% 98%;
+    
+    --card: 222 47% 13%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 222 47% 13%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary-hsl: 38 56% 51%;
+    --primary-foreground: 222 47% 11%;
+    
+    --secondary: 222 47% 18%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 222 47% 18%;
+    --muted-foreground: 220 9% 64%;
+    
+    --accent-hsl: 38 56% 51%;
+    --accent-foreground: 222 47% 11%;
+    
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 222 47% 18%;
+    --input: 222 47% 18%;
+    --ring: 38 56% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Arabic text support */
+  [dir="rtl"] body {
+    font-family: var(--font-tajawal), var(--font-inter), system-ui, sans-serif;
+  }
+}
+
+/* Custom scrollbar */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+/* Jammal brand gradient */
+@layer utilities {
+  .bg-jammal-gradient {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  }
+  
+  .bg-jammal-accent-gradient {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+  }
+  
+  .text-jammal-primary {
+    color: var(--primary);
+  }
+  
+  .text-jammal-accent {
+    color: var(--accent);
+  }
+  
+  .border-jammal-accent {
+    border-color: var(--accent);
+  }
+}
