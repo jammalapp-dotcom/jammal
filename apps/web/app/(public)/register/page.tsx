@@ -33,7 +33,7 @@ function RegisterForm() {
     const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { sendOtp } = useSupabase();
+    const { signUpWithEmail } = useSupabase();
 
     const [step, setStep] = useState(1);
     const [role, setRole] = useState<Role | ''>('');
@@ -131,15 +131,19 @@ function RegisterForm() {
         setApiLoading(true);
         setApiError('');
         try {
-            const success = await sendOtp(phone);
+            const { success, error } = await signUpWithEmail(email, password);
 
             if (!success) {
-                setApiError(t('auth.networkError'));
+                if (error?.includes('already registered')) {
+                    setApiError('هذا البريد مسجل مسبقاً. جرب تسجيل الدخول.');
+                } else {
+                    setApiError(error || t('auth.networkError'));
+                }
                 setApiLoading(false);
                 return;
             }
 
-            // Store metadata to be saved in profile after verification
+            // Store metadata to be saved in profile after email confirmation
             const profileData = {
                 userType: role,
                 fullNameEn,
@@ -152,7 +156,7 @@ function RegisterForm() {
             };
             localStorage.setItem('jammal_pending_profile', JSON.stringify(profileData));
 
-            router.push(`/login?phone=${encodeURIComponent(phone)}&verify=true`);
+            setSubmitted(true);
         } catch (err) {
             setApiError('Network error. Please try again.');
         } finally {
@@ -174,9 +178,13 @@ function RegisterForm() {
         return (
             <div className="pub-auth-page">
                 <div className="pub-auth-card pub-success-card">
-                    <div className="pub-success-icon">✅</div>
+                    <div className="pub-success-icon">📧</div>
                     <h2>{t('registerPage.successTitle')}</h2>
-                    <p>{t('registerPage.successMsg')}</p>
+                    <p style={{ lineHeight: 1.8, color: 'rgba(255,255,255,0.8)' }}>
+                        تم إنشاء حسابك بنجاح!<br />
+                        تم إرسال رابط تأكيد إلى <strong style={{ color: '#D4A843' }}>{email}</strong><br />
+                        الرجاء فتح بريدك الإلكتروني والضغط على رابط التأكيد لتفعيل حسابك.
+                    </p>
                     <a href="/login" className="pub-btn pub-btn-primary pub-btn-lg" style={{ marginTop: 24 }}>
                         {t('registerPage.goToLogin')}
                     </a>
