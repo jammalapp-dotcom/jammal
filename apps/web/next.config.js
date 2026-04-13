@@ -3,9 +3,14 @@ const nextConfig = {
     // تمكين transpile للحزم المشتركة
     transpilePackages: ['@jammal/shared', '@jammal/ui', '@jammal/api'],
 
-    // إعدادت الصور
+    // Static Export for Hostinger
+    output: 'export',
+    trailingSlash: true,
+
+    // إعدادات الصور - unoptimized for static export
     images: {
         domains: ['kfzoouifwtubmsbtktyy.supabase.co'],
+        unoptimized: true,
     },
 };
 

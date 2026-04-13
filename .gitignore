@@ -39,3 +39,11 @@ yarn-error.*
 app-example
 
 jammal_website.zip
+jammal-hostinger-deploy.zip
+
+# Next.js
+.next/
+out/
+
+# Old website folder
+website/

@@ -99,7 +99,7 @@ export default function PublicLayout({
                             <h4>{t('footer.company')}</h4>
                             <a href="#">{t('footer.aboutUs')}</a>
                             <a href="#">{t('footer.careers')}</a>
-                            <a href="#">{t('footer.contact')}</a>
+                            <a href="mailto:contact@jammal.express">{t('footer.contact')}</a>
                             <a href="#">{t('footer.blog')}</a>
                         </div>
                         <div className="pub-footer-col">

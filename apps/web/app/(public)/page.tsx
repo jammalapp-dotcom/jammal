@@ -148,12 +148,6 @@ export default function LandingPage() {
 
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) {
-            // Store form data to resume after registration
-            localStorage.setItem('jammal_pending_shipment', JSON.stringify(formData));
-            router.push('/register?role=customer&return_to=shipment');
-            return;
-        }
 
         if (!formData.pickup || !formData.delivery || !formData.cargoType) {
             alert(t('landing.shipmentForm.errorFillRequired'));
@@ -162,28 +156,45 @@ export default function LandingPage() {
 
         setIsSubmitting(true);
         try {
-            // Generate a random Short ID (SH-YYYY-XXXX)
-            const shortId = `SH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            // Build email body for notification
+            const emailSubject = `طلب شحنة جديدة - من ${formData.pickup} إلى ${formData.delivery}`;
+            const emailBody = [
+                `طلب عرض سعر جديد من الموقع`,
+                ``,
+                `المسار: ${formData.pickup} → ${formData.delivery}`,
+                `نوع البضاعة: ${formData.cargoType}`,
+                `نوع المركبة: ${formData.vehicleType || 'غير محدد'}`,
+                `الوزن: ${formData.weight || 'غير محدد'} كغ`,
+                ``,
+                `المستخدم: ${user ? user.name : 'زائر غير مسجل'}`,
+                `التاريخ: ${new Date().toLocaleString('ar-SA')}`,
+            ].join('\n');
 
-            const { error } = await supabase.from('shipments').insert({
-                short_id: shortId,
-                customer_id: user?.id || '00000000-0000-0000-0000-000000000000', // Need actual ID from context
-                pickup_city: formData.pickup,
-                pickup_address: formData.pickup, // Default to city name for now
-                delivery_city: formData.delivery,
-                delivery_address: formData.delivery, // Default to city name for now
-                cargo_category: formData.cargoType,
-                cargo_category_ar: t(`landing.shipmentForm.cargoTypes.${formData.cargoType}`),
-                weight: parseInt(formData.weight) || 0,
-                vehicle_type: formData.vehicleType,
-                status: 'searching', // Must be 'searching' to be visible to others
-                pricing_mode: 'bidding', // Default pricing mode
-                estimated_price: 0, // Placeholder
-                distance: 0, // Placeholder
-                created_at: new Date().toISOString(),
-            });
+            // Send email notification
+            window.open(`mailto:contact@jammal.express?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`, '_self');
 
-            if (error) throw error;
+            // If user is logged in, also save to Supabase
+            if (user) {
+                const shortId = `SH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+                await supabase.from('shipments').insert({
+                    short_id: shortId,
+                    customer_id: user.id,
+                    pickup_city: formData.pickup,
+                    pickup_address: formData.pickup,
+                    delivery_city: formData.delivery,
+                    delivery_address: formData.delivery,
+                    cargo_category: formData.cargoType,
+                    cargo_category_ar: t(`landing.shipmentForm.cargoTypes.${formData.cargoType}`),
+                    weight: parseInt(formData.weight) || 0,
+                    vehicle_type: formData.vehicleType,
+                    status: 'searching',
+                    pricing_mode: 'bidding',
+                    estimated_price: 0,
+                    distance: 0,
+                    created_at: new Date().toISOString(),
+                }).then(({ error }) => { if (error) console.warn('DB save:', error.message); });
+            }
+
             setSuccess(true);
             setFormData({ pickup: '', delivery: '', cargoType: '', vehicleType: '', weight: '' });
         } catch (err: any) {
